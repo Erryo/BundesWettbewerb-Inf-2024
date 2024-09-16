@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-const PATH_TO_INPUT string = "../43.1/J1_QuadratischPraktischGrБn/garten2.txt"
+const PATH_TO_INPUT string = "../43.1/J1_QuadratischPraktischGrБn/garten5.txt"
 
 func main() {
 	readValues := readFile()
@@ -45,28 +45,28 @@ func readFile() []string {
 	return readValues
 }
 
-func readValuesToInt(readValues []string) (uint8, uint8, uint8, uint8) {
-	var heigth uint8
-	var width uint8
-	var noParties uint8
-	var maxNoLots uint8
+func readValuesToInt(readValues []string) (int, int, int, int) {
+	var heigth int
+	var width int
+	var noParties int
+	var maxNoLots int
 
 	res, err := strconv.Atoi(readValues[0])
 	if err != nil {
 		log.Fatal("Please input valid numbers")
 	}
-	noParties = uint8(res)
+	noParties = res
 
 	res, err = strconv.Atoi(readValues[1])
 	if err != nil {
 		log.Fatal("Please input valid numbers")
 	}
-	heigth = uint8(res)
+	heigth = res
 	res, err = strconv.Atoi(readValues[2])
 	if err != nil {
 		log.Fatal("Please input valid numbers")
 	}
-	width = uint8(res)
+	width = res
 
 	maxNoLots = noParties / 10
 	return heigth, width, noParties, maxNoLots
