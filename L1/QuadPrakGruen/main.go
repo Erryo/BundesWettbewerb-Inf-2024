@@ -4,16 +4,26 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"strconv"
 )
 
-const PATH_TO_INPUT string = "../43.1/J1_QuadratischPraktischGrБn/garten0.txt"
+const PATH_TO_INPUT string = "../43.1/J1_QuadratischPraktischGrБn/garten2.txt"
 
 func main() {
 	readValues := readFile()
-	heigth, width, noParties, maxNoLots := readValuesToInt(readValues)
-	fmt.Println(heigth, width, noParties, maxNoLots)
+	heigth, width, noParties, _ := readValuesToInt(readValues)
+
+	totalArea := heigth * width
+	areaPerPartie := float64(totalArea) / float64(noParties)
+	lengthSquare := math.Sqrt(areaPerPartie)
+	divA := float64(heigth) / lengthSquare
+	divB := float64(width) / lengthSquare
+
+	text := fmt.Sprintf("For a lot of the size %vx%v and %v parties Mr.Green should give each person %.4f sqr meters \n", heigth, width, noParties, areaPerPartie)
+	text_2 := fmt.Sprintf("which means he should divide the heigth by %.4f and the width by %.4f\n", divA, divB)
+	fmt.Println(text, text_2)
 }
 
 func readFile() []string {
