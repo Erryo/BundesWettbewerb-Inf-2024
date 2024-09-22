@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"unicode"
 )
 
 const PATH_TO_FILE string = "../43.1/J2_Texthopsen/hopsen1.txt"
@@ -35,9 +36,34 @@ func main() {
 	jumpDistances := []int{0, 0}
 	var diff int
 
-	for {
+	jumpDistances = SmartAppend(jumpDistances, ReadRuneGetDistance(reader, germanAlphabetMap)-2)
+	jumpDistances = SmartAppend(jumpDistances, ReadRuneGetDistance(reader, germanAlphabetMap)-1)
 
+	jump := jumpDistances[1]
+	if jumpDistances[0] < jumpDistances[1] {
+		jump = jumpDistances[0]
+	}
+
+	_, err = reader.Discard(jump)
+	if err != nil {
+		log.Fatal(err)
+	}
+	diff = AbsInt(jumpDistances[0] - jumpDistances[1])
+	jumpDistances = SmartAppend(jumpDistances, ReadRuneGetDistance(reader, germanAlphabetMap)-1)
+
+	if err = reader.UnreadRune(); err != nil {
+		log.Fatal(err)
+	}
+	_, err = reader.Discard(diff)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for range 3 {
 		jumpDistances = SmartAppend(jumpDistances, ReadRuneGetDistance(reader, germanAlphabetMap))
+		if err = reader.UnreadRune(); err != nil {
+			log.Fatal(err)
+		}
 
 		jump := jumpDistances[1]
 		if jumpDistances[0] < jumpDistances[1] {
@@ -48,10 +74,13 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		diff = AbsInt(jumpDistances[0] - jumpDistances[1])
 
 		jumpDistances = SmartAppend(jumpDistances, ReadRuneGetDistance(reader, germanAlphabetMap))
+		if err = reader.UnreadRune(); err != nil {
+			log.Fatal(err)
+		}
 
-		diff = AbsInt(jumpDistances[0] - jumpDistances[1])
 		_, err = reader.Discard(diff)
 		if err != nil {
 			log.Fatal(err)
@@ -66,6 +95,9 @@ func ReadRuneGetDistance(reader *bufio.Reader, germanAlphabetMap map[string]int)
 		log.Fatal(string(readRune), " :Problem Reading: ", err)
 	}
 
+	if !unicode.IsLetter(readRune) {
+		return ReadRuneGetDistance(reader, germanAlphabetMap)
+	}
 	readLetter := strings.ToLower(string(readRune))
 	jA := germanAlphabetMap[readLetter]
 
