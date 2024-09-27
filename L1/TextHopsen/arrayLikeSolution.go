@@ -63,8 +63,10 @@ func Start() {
 		jumpDistance, firstPlayer = calcWhoseJump(jA, jB)
 		differenceDistance := AbsInt(jA - jB)
 
-		SmartBoolAppend(lastJumps, firstPlayer)
+		lastJumps = SmartBoolAppend(lastJumps, firstPlayer)
 
+		fmt.Println(jumpDistance, differenceDistance, jA, jB)
+		fmt.Println(lastJumps)
 		if firstPlayer {
 			if lastJumps[0] == firstPlayer {
 				discard(reader, &pA, jumpDistance)
