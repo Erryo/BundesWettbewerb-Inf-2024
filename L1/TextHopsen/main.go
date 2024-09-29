@@ -11,36 +11,31 @@ import (
 	"unicode"
 )
 
-const PATH_TO_FILE string = "../43.1/J2_Texthopsen/test.txt"
+var PATH_TO_FILE string = "../43.1/J2_Texthopsen/test.txt"
 
 const NUMBER_OF_PLAYERS = 2
 
-// Indicates who should win in case of EOF error
-// false - player 1
-// true - player 2
-var whoseJump bool
-
 func main() {
-	//	for i := range 6 {
-	//		var PATH_TO_INPUT string = fmt.Sprintf("../43.1/J1_QuadratischPraktischGrБn/garten%v.txt", i)
-	//	}
+	for i := range 5 {
+		PATH_TO_FILE = fmt.Sprintf("../43.1/J2_Texthopsen/hopsen%v.txt", i+1)
 
-	var leastJumps uint8
-	var noOfLeastJumps int
-	data := readFileToArray()
-	noOfLeastJumps = getPlayersNoOfMoves(0, &data)
+		var leastJumps uint8
+		var noOfLeastJumps int
+		data := readFileToArray()
+		noOfLeastJumps = getPlayersNoOfMoves(0, &data)
 
-	for playerIndex := range NUMBER_OF_PLAYERS {
-		fmt.Println("-----------------------")
-		noJumps := getPlayersNoOfMoves(uint8(playerIndex+1), &data)
-		if noJumps < noOfLeastJumps {
-			noOfLeastJumps = noJumps
-			leastJumps = uint8(playerIndex) + 1
+		for playerIndex := range NUMBER_OF_PLAYERS {
+			fmt.Println("-----------------------")
+			noJumps := getPlayersNoOfMoves(uint8(playerIndex+1), &data)
+			if noJumps < noOfLeastJumps {
+				noOfLeastJumps = noJumps
+				leastJumps = uint8(playerIndex) + 1
+			}
+			fmt.Println("-----------------------")
+
 		}
-		fmt.Println("-----------------------")
-
+		fmt.Printf("The winner is player number %v with %v jumps", leastJumps, noOfLeastJumps)
 	}
-	fmt.Printf("The winner is player number %v with %v jumps", leastJumps, noOfLeastJumps)
 }
 
 // Reads The File Rune by Rune appending the equevalent
@@ -62,60 +57,48 @@ func readFileToArray() []uint8 {
 
 	var data []uint8
 	reader := bufio.NewReader(file)
-
-	jumpDistances := []int{0, 0}
-	var diff int
-
-	jumpDistances = SmartAppend(jumpDistances, ReadRuneGetDistance(reader, germanAlphabetMap)-2)
-	jumpDistances = SmartAppend(jumpDistances, ReadRuneGetDistance(reader, germanAlphabetMap)-1)
-
-	jump := jumpDistances[1]
-	if jumpDistances[0] < jumpDistances[1] {
-		jump = jumpDistances[0]
-	}
-
-	_, err = reader.Discard(jump)
-	if err != nil {
-		log.Fatal(err)
-	}
-	diff = AbsInt(jumpDistances[0] - jumpDistances[1])
-	jumpDistances = SmartAppend(jumpDistances, ReadRuneGetDistance(reader, germanAlphabetMap)-1)
-
-	if err = reader.UnreadRune(); err != nil {
-		log.Fatal(err)
-	}
-	_, err = reader.Discard(diff)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for range 3 {
-		jumpDistances = SmartAppend(jumpDistances, ReadRuneGetDistance(reader, germanAlphabetMap))
-		if err = reader.UnreadRune(); err != nil {
-			log.Fatal(err)
-		}
-
-		jump := jumpDistances[1]
-		if jumpDistances[0] < jumpDistances[1] {
-			jump = jumpDistances[0]
-		}
-
-		_, err = reader.Discard(jump)
+	for {
+		readRune, _, err := reader.ReadRune()
 		if err != nil {
-			log.Fatal(err)
-		}
-		diff = AbsInt(jumpDistances[0] - jumpDistances[1])
-
-		jumpDistances = SmartAppend(jumpDistances, ReadRuneGetDistance(reader, germanAlphabetMap))
-		if err = reader.UnreadRune(); err != nil {
+			if err == io.EOF {
+				break
+			}
 			log.Fatal(err)
 		}
 
-		_, err = reader.Discard(diff)
+		if !unicode.IsLetter(readRune) {
+			continue
+		}
+		readLetter := strings.ToLower(string(readRune))
+		data = append(data, germanAlphabetMap[readLetter])
+	}
+	return data
+}
+
+func getPlayersNoOfMoves(playerNo uint8, data *[]uint8) int {
+	playersMoves := 0
+	var locationPointer int
+	lengthOfData := len(*data)
+
+	// Not all players start from the same position
+	// they are offset by their number
+
+	err := increasePointer(&locationPointer, playerNo, lengthOfData)
+	if err != nil {
+		return 0
+	}
+
+	for locationPointer < lengthOfData {
+
+		fmt.Println("Location:", locationPointer)
+		jump := (*data)[locationPointer]
+		fmt.Println(" ", jump)
+		playersMoves += 1
+
+		err := increasePointer(&locationPointer, jump, lengthOfData)
 		if err != nil {
-			log.Fatal(err)
+			break
 		}
-
 	}
 	return playersMoves
 }
@@ -126,27 +109,4 @@ func increasePointer(locationPointer *int, amount uint8, lengthOfData int) error
 	}
 	*locationPointer += int(amount)
 	return nil
-}
-
-func ReadRuneGetDistance(reader *bufio.Reader, germanAlphabetMap map[string]int) int {
-	readRune, _, err := reader.ReadRune()
-	if err != nil {
-		log.Fatal(string(readRune), " :Problem Reading: ", err)
-	}
-
-	if !unicode.IsLetter(readRune) {
-		return ReadRuneGetDistance(reader, germanAlphabetMap)
-	}
-	readLetter := strings.ToLower(string(readRune))
-	jA := germanAlphabetMap[readLetter]
-
-	fmt.Println(readLetter, jA)
-	return jA
-}
-
-func SmartAppend(array []int, element int) []int {
-	if len(array) >= 2 {
-		return []int{array[1], element}
-	}
-	return append(array, element)
 }
