@@ -1,0 +1,80 @@
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"log"
+	"os"
+	"strconv"
+	"strings"
+)
+
+// areaRange the start and end value of the portion
+// availableTo is used to show which runner can particpate to this racePortion
+// the index corresponds to the player index, True-can particpate
+// False-Cannot particpate
+type racePortion struct {
+	start, end  int
+	availableTo []bool
+	noOfPlayers int
+}
+
+func main() {
+	var raceMap []racePortion
+	data := getData("../43.1/A3_Wandertag/wandern1.txt")
+
+	firstPortion := racePortion{data[0][0], data[0][1], make([]bool, len(data)), 1}
+	raceMap = append(raceMap, firstPortion)
+	fmt.Println(raceMap)
+	// Overlapping
+}
+
+func test1(toAdd racePortion, raceMap []racePortion) []racePortion {
+	// index could be replaced with len(raceMap)-1
+	c_min := toAdd.start
+	c_max := toAdd.end
+	for _, loopRacePortion := range raceMap {
+		// Not Overlapping
+		if c_min < loopRacePortion.start && c_max < loopRacePortion.start {
+		} else if c_min > loopRacePortion.end && c_max > loopRacePortion.end {
+		} else if c_min < loopRacePortion.end && c_min > loopRacePortion.start && c_max > loopRacePortion.end {
+		} else if c_max < loopRacePortion.end && c_max > loopRacePortion.start && c_min > loopRacePortion.end {
+		} else if c_min > loopRacePortion.start && c_max < loopRacePortion.end {
+		} else if c_max > loopRacePortion.start && c_min < loopRacePortion.end {
+		}
+	}
+}
+
+func getData(filePath string) [][]int {
+	file, err := os.Open(filePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	scanner.Scan()
+	noOfRunners := atoiNoErr(scanner.Text())
+	runnerLimits := make([][]int, noOfRunners)
+
+	ind := 0
+	for scanner.Scan() {
+		onesLimitString := strings.Split(scanner.Text(), " ")
+		onesLimit := make([]int, 2)
+		onesLimit[0] = atoiNoErr(onesLimitString[0])
+		onesLimit[1] = atoiNoErr(onesLimitString[1])
+		runnerLimits[ind] = append(runnerLimits[ind], onesLimit...)
+		ind += 1
+
+	}
+	fmt.Println(runnerLimits)
+	return runnerLimits
+}
+
+func atoiNoErr(num string) int {
+	number, err := strconv.Atoi(num)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return number
+}
