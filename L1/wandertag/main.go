@@ -25,18 +25,23 @@ func main() {
 
 	firstPortion := racePortion{data[0][0], data[0][1], make([]bool, len(data)), 1}
 	raceMap = append(raceMap, firstPortion)
-	fmt.Println(raceMap)
-	test1(data[1], 1, len(data), raceMap)
+	for ind, date := range data {
+		fmt.Println("IND", ind)
+		raceMap = test1(date, ind, len(data), raceMap)
+	}
 	// Overlapping
+	for _, portion := range raceMap {
+		fmt.Println(portion.start, portion.end, portion.noOfPlayers)
+	}
 }
 
 func test1(toAdd []int, index int, totalPlayers int, raceMap []racePortion) []racePortion {
-	// index could be replaced with len(raceMap)-1
 	c_min := toAdd[0]
 	c_max := toAdd[1]
 	for loopIndex, loopRacePortion := range raceMap {
 		// Not Overlapping
 		if c_min < loopRacePortion.start && c_max < loopRacePortion.start {
+			fmt.Println(1)
 			// !!!!!!!! Problem
 			// New portion not always at the end
 			// !!!!!!!!!!!
@@ -49,6 +54,7 @@ func test1(toAdd []int, index int, totalPlayers int, raceMap []racePortion) []ra
 			raceMap = append(raceMap, newPortion)
 
 		} else if c_min > loopRacePortion.end && c_max > loopRacePortion.end {
+			fmt.Println(2)
 			availableTo := make([]bool, totalPlayers)
 			availableTo[index] = true
 			newPortion := racePortion{start: toAdd[0], end: toAdd[1], availableTo: availableTo, noOfPlayers: 1}
@@ -56,38 +62,89 @@ func test1(toAdd []int, index int, totalPlayers int, raceMap []racePortion) []ra
 			// Co ranges
 			// Right
 		} else if c_min < loopRacePortion.end && c_min > loopRacePortion.start && c_max > loopRacePortion.end {
+			fmt.Println(3)
 			toInsert := racePortion{start: c_min, end: loopRacePortion.end}
 			newPortion := racePortion{start: loopRacePortion.end, end: c_max}
 			loopRacePortion.end = c_min
 
-			fmt.Println(loopRacePortion, toInsert, newPortion)
 			raceMap[loopIndex] = loopRacePortion
 			raceMap = append(raceMap, toInsert, newPortion)
 			// Left
 		} else if c_max < loopRacePortion.end && c_max > loopRacePortion.start && c_min > loopRacePortion.end {
+			fmt.Println(4)
 			toInsert := racePortion{start: loopRacePortion.start, end: c_max}
 			newPortion := racePortion{start: c_min, end: loopRacePortion.start}
 			loopRacePortion.start = c_max
 
-			fmt.Println(loopRacePortion, toInsert, newPortion)
 			raceMap[loopIndex] = loopRacePortion
 			raceMap = append(raceMap, toInsert, newPortion)
 			// Sub-range
 		} else if c_min > loopRacePortion.start && c_max < loopRacePortion.end {
+			fmt.Println(5)
 			toInsert := racePortion{start: c_max, end: loopRacePortion.end}
 			newPortion := racePortion{start: c_min, end: c_max}
 			loopRacePortion.end = c_min
 
-			fmt.Println(loopRacePortion, toInsert, newPortion)
 			raceMap[loopIndex] = loopRacePortion
 			raceMap = append(raceMap, toInsert, newPortion)
 			// Sup-range
 		} else if c_max > loopRacePortion.start && c_min < loopRacePortion.end {
+			fmt.Println(6)
 			toInsert := racePortion{start: c_min, end: loopRacePortion.start}
 			newPortion := racePortion{start: loopRacePortion.end, end: c_max}
 
-			fmt.Println(loopRacePortion, toInsert, newPortion)
 			raceMap = append(raceMap, toInsert, newPortion)
+		} else if c_min == loopRacePortion.start && c_max > loopRacePortion.end {
+			fmt.Println(7)
+			loopRacePortion.noOfPlayers += 1
+			newPortion := racePortion{start: loopRacePortion.end + 1, end: c_max}
+
+			raceMap[loopIndex] = loopRacePortion
+			raceMap = append(raceMap, newPortion)
+		} else if c_min == loopRacePortion.end {
+			fmt.Println(7)
+			loopRacePortion.end -= 1
+			toInsert := racePortion{start: c_min, end: c_min}
+			newPortion := racePortion{start: c_min + 1, end: c_max}
+
+			raceMap[loopIndex] = loopRacePortion
+			raceMap = append(raceMap, newPortion)
+			raceMap = append(raceMap, toInsert)
+		} else if c_max == loopRacePortion.start {
+			fmt.Println(8)
+			loopRacePortion.start += 1
+			toInsert := racePortion{start: c_max, end: c_max}
+			newPortion := racePortion{start: c_min, end: c_max - 1}
+
+			raceMap[loopIndex] = loopRacePortion
+			raceMap = append(raceMap, newPortion)
+			raceMap = append(raceMap, toInsert)
+		} else if c_max == loopRacePortion.end && c_min < loopRacePortion.start {
+			fmt.Println(9)
+			newPortion := racePortion{start: c_min, end: loopRacePortion.end - 1}
+			loopRacePortion.noOfPlayers += 1
+
+			raceMap = append(raceMap, newPortion)
+			raceMap[loopIndex] = loopRacePortion
+		} else if c_min == loopRacePortion.start && c_max == loopRacePortion.end {
+			fmt.Println(10)
+			loopRacePortion.noOfPlayers += 1
+			raceMap[loopIndex] = loopRacePortion
+		} else if c_min == loopRacePortion.start && c_max < loopRacePortion.end {
+			fmt.Println(11)
+			loopRacePortion.noOfPlayers += 1
+			newPortion := racePortion{start: c_max + 1, end: loopRacePortion.end}
+			loopRacePortion.start = c_max
+
+			raceMap[loopIndex] = loopRacePortion
+			raceMap = append(raceMap, newPortion)
+		} else if c_max == loopRacePortion.end && c_min > loopRacePortion.start {
+			fmt.Println(11)
+			loopRacePortion.noOfPlayers += 1
+			newPortion := racePortion{start: c_min + 1, end: loopRacePortion.end}
+			loopRacePortion.end = c_min
+			raceMap[loopIndex] = loopRacePortion
+			raceMap = append(raceMap, newPortion)
 		}
 	}
 	return raceMap
