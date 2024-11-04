@@ -37,9 +37,9 @@ func main() {
 		fmt.Println("--------------------------------------------")
 	}
 	// Overlapping
-	//for _, portion := range raceMap {
-	//	fmt.Println(portion.start, portion.end, portion.noOfPlayers)
-	//}
+	for _, portion := range raceMap {
+		fmt.Println(portion.start, portion.end, portion.noOfPlayers)
+	}
 }
 
 func test1(toAdd []int, index int, totalPlayers int, raceMap []racePortion) []racePortion {
@@ -113,10 +113,13 @@ outer:
 			fmt.Println("Sub-range inside")
 			toInsert := racePortion{start: c_max, end: loopRacePortion.end}
 			newPortion := racePortion{start: c_min, end: c_max}
-			loopRacePortion.end = c_min
+			loopRacePortion.end = c_min // a
 
 			raceMap[loopIndex] = loopRacePortion
-			raceMap = append(raceMap, toInsert, newPortion)
+			raceMap = append(raceMap, toInsert)
+			if index < 2 {
+				raceMap = append(raceMap, newPortion)
+			}
 			// Sup-range
 		} else if c_max > loopRacePortion.end && c_min < loopRacePortion.start {
 			fmt.Println("Sub-range outside")
