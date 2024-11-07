@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // areaRange the start and end value of the portion
@@ -18,49 +20,51 @@ type racePortion struct {
 	availableTo []bool
 	noOfPlayers int
 }
+type ByNoOfPlayers []racePortion
+
+func (a ByNoOfPlayers) Len() int           { return len(a) }
+func (a ByNoOfPlayers) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByNoOfPlayers) Less(i, j int) bool { return a[i].noOfPlayers > a[j].noOfPlayers }
 
 func main() {
+	startTime := time.Now()
 	var raceMap []racePortion
 	data := getData("../43.1/A3_Wandertag/wandern1.txt")
 
 	firstPortion := racePortion{data[0][0], data[0][1], make([]bool, len(data)), 1}
 	raceMap = append(raceMap, firstPortion)
 	fmt.Println(raceMap)
-	for ind, date := range data {
+	for ind, datum := range data {
 		if ind == 0 {
 			continue
 		}
-		fmt.Println("--------------------------------------------")
-		fmt.Println(date)
-		fmt.Println("IND", ind)
-		raceMap = test1(date, ind, len(data), raceMap)
+		fmt.Println("------------------", ind, datum, "--------------------------")
+		raceMap = test1(datum, ind, len(data), raceMap)
 		fmt.Println("--------------------------------------------")
 	}
 	// Overlapping
-	for _, portion := range raceMap {
-		fmt.Println(portion.start, portion.end, portion.noOfPlayers)
-	}
+
+	printMap(raceMap)
+
+	fmt.Println("--------------------------------------------")
+	getHighest(raceMap)
+	fmt.Println("--------------------------------------------")
+	fmt.Println(time.Since(startTime))
 }
 
 func test1(toAdd []int, index int, totalPlayers int, raceMap []racePortion) []racePortion {
 	c_min := toAdd[0]
 	c_max := toAdd[1]
-	for _, portion := range raceMap {
-		fmt.Println(portion.start, portion.end, portion.noOfPlayers)
-	}
+
 outer:
 	for loopIndex, loopRacePortion := range raceMap {
 		// Not Overlapping
 		if c_min < loopRacePortion.start && c_max < loopRacePortion.start {
+
 			fmt.Println("Not Overlapping left")
-			// !!!!!!!! Problem
-			// New portion not always at the end
-			// !!!!!!!!!!!
-			// Do not think it matters any more
-			// i do not need it in order so i can just append
-			// !!!!!!!!
 			availableTo := make([]bool, totalPlayers)
 			availableTo[index] = true
+
 			for i, v := range raceMap {
 				if i == index {
 					continue
@@ -90,101 +94,207 @@ outer:
 			// Co ranges
 			// Right
 		} else if c_min < loopRacePortion.end && c_min > loopRacePortion.start && c_max > loopRacePortion.end {
-
 			fmt.Println("Co range right")
-			toInsert := racePortion{start: c_min, end: loopRacePortion.end}
-			newPortion := racePortion{start: loopRacePortion.end, end: c_max}
+
+			availableTo := make([]bool, totalPlayers)
+			availableTo[index] = true
+			availableTo[loopIndex] = true
+			newAvailableTo := make([]bool, totalPlayers)
+			newAvailableTo[index] = true
+
+			toInsert := racePortion{start: c_min, end: loopRacePortion.end, availableTo: availableTo, noOfPlayers: loopRacePortion.noOfPlayers + 1}
+			newPortion := racePortion{start: loopRacePortion.end, end: c_max, noOfPlayers: 1, availableTo: newAvailableTo}
 			loopRacePortion.end = c_min - 1
 
 			raceMap[loopIndex] = loopRacePortion
-			raceMap = append(raceMap, toInsert, newPortion)
+			raceMap = append(raceMap, toInsert)
+			if index < 2 {
+				raceMap = append(raceMap, newPortion)
+			} else {
+				ix := findIndex(raceMap, c_min, c_max)
+				raceMap[ix].availableTo[loopIndex] = true
+				raceMap[ix].noOfPlayers += 1
+			}
 			// Left
 		} else if c_max < loopRacePortion.end && c_max > loopRacePortion.start && c_min > loopRacePortion.end {
 			fmt.Println("Co range left")
-			fmt.Println(4)
-			toInsert := racePortion{start: loopRacePortion.start, end: c_max}
-			newPortion := racePortion{start: c_min, end: loopRacePortion.start}
+			availableTo := make([]bool, totalPlayers)
+			availableTo[index] = true
+			availableTo[loopIndex] = true
+			newAvailableTo := make([]bool, totalPlayers)
+			newAvailableTo[index] = true
+
+			toInsert := racePortion{start: loopRacePortion.start, end: c_max, availableTo: availableTo, noOfPlayers: loopRacePortion.noOfPlayers + 1}
+			newPortion := racePortion{start: c_min, end: loopRacePortion.start, availableTo: newAvailableTo, noOfPlayers: 1}
 			loopRacePortion.start = c_max
 
 			raceMap[loopIndex] = loopRacePortion
-			raceMap = append(raceMap, toInsert, newPortion)
+			raceMap = append(raceMap, toInsert)
+			if index < 2 {
+				raceMap = append(raceMap, newPortion)
+			} else {
+				ix := findIndex(raceMap, c_min, c_max)
+				raceMap[ix].availableTo[loopIndex] = true
+				raceMap[ix].noOfPlayers += 1
+			}
 			// Sub-range
 		} else if c_min > loopRacePortion.start && c_max < loopRacePortion.end {
 			fmt.Println("Sub-range inside")
-			toInsert := racePortion{start: c_max, end: loopRacePortion.end}
-			newPortion := racePortion{start: c_min, end: c_max}
+			availableTo := make([]bool, totalPlayers)
+			availableTo[index] = true
+			availableTo[loopIndex] = true
+			newAvailableTo := make([]bool, totalPlayers)
+			newAvailableTo[index] = true
+
+			toInsert := racePortion{start: c_max, end: loopRacePortion.end, availableTo: newAvailableTo, noOfPlayers: loopRacePortion.noOfPlayers}
+			newPortion := racePortion{start: c_min, end: c_max, availableTo: availableTo, noOfPlayers: loopRacePortion.noOfPlayers + 1}
 			loopRacePortion.end = c_min // a
 
 			raceMap[loopIndex] = loopRacePortion
 			raceMap = append(raceMap, toInsert)
 			if index < 2 {
 				raceMap = append(raceMap, newPortion)
+			} else {
+				ix := findIndex(raceMap, c_min, c_max)
+				raceMap[ix].availableTo[loopIndex] = true
+				raceMap[ix].noOfPlayers += 1
 			}
 			// Sup-range
 		} else if c_max > loopRacePortion.end && c_min < loopRacePortion.start {
 			fmt.Println("Sub-range outside")
-			toInsert := racePortion{start: c_min, end: loopRacePortion.start}
-			newPortion := racePortion{start: loopRacePortion.end, end: c_max}
+			availableTo := make([]bool, totalPlayers)
+			availableTo[index] = true
 
-			raceMap = append(raceMap, toInsert, newPortion)
+			toInsert := racePortion{start: c_min, end: loopRacePortion.start, availableTo: availableTo, noOfPlayers: 1}
+			newPortion := racePortion{start: loopRacePortion.end, end: c_max, availableTo: availableTo, noOfPlayers: 1}
+			loopRacePortion.availableTo[index] = true
+			loopRacePortion.noOfPlayers += 1
+
+			raceMap[loopIndex] = loopRacePortion
+			raceMap = append(raceMap, toInsert)
+			if index < 2 {
+				raceMap = append(raceMap, newPortion)
+			} else {
+				ix := findIndex(raceMap, c_min, c_max)
+				raceMap[ix].noOfPlayers += 1
+			}
 		} else if c_min == loopRacePortion.start && c_max > loopRacePortion.end {
 			fmt.Println("Equal Complete right")
+
+			availableTo := make([]bool, totalPlayers)
+			availableTo[index] = true
+
 			loopRacePortion.noOfPlayers += 1
-			newPortion := racePortion{start: loopRacePortion.end + 1, end: c_max}
+			loopRacePortion.availableTo[index] = true
+			newPortion := racePortion{start: loopRacePortion.end + 1, end: c_max, availableTo: availableTo, noOfPlayers: 1}
 
 			raceMap[loopIndex] = loopRacePortion
-			raceMap = append(raceMap, newPortion)
+			if index < 2 {
+				raceMap = append(raceMap, newPortion)
+			} else {
+				ix := findIndex(raceMap, c_min, c_max)
+				raceMap[ix].noOfPlayers += 1
+			}
 		} else if c_min == loopRacePortion.end {
 			fmt.Println("Equal Touch right")
-			fmt.Println(7)
+
+			availableTo := loopRacePortion.availableTo
+			availableTo[index] = true
+			newAvailableTo := make([]bool, totalPlayers)
+			newAvailableTo[index] = true
+
 			loopRacePortion.end -= 1
-			toInsert := racePortion{start: c_min, end: c_min}
-			newPortion := racePortion{start: c_min + 1, end: c_max}
+			toInsert := racePortion{start: c_min, end: c_min, availableTo: availableTo, noOfPlayers: loopRacePortion.noOfPlayers + 1}
+			newPortion := racePortion{start: c_min + 1, end: c_max, availableTo: newAvailableTo, noOfPlayers: 1}
 
 			raceMap[loopIndex] = loopRacePortion
-			raceMap = append(raceMap, newPortion)
+			if index < 2 {
+				raceMap = append(raceMap, newPortion)
+			} else {
+				ix := findIndex(raceMap, c_min, c_max)
+				raceMap[ix].noOfPlayers += 1
+			}
 			raceMap = append(raceMap, toInsert)
 		} else if c_max == loopRacePortion.start {
 			fmt.Println("Equal touch left")
+
+			availableTo := loopRacePortion.availableTo
+			availableTo[index] = true
+			newAvailableTo := make([]bool, totalPlayers)
+			newAvailableTo[index] = true
+
 			loopRacePortion.start += 1
-			toInsert := racePortion{start: c_max, end: c_max}
-			newPortion := racePortion{start: c_min, end: c_max - 1}
+			toInsert := racePortion{start: c_max, end: c_max, availableTo: availableTo, noOfPlayers: loopRacePortion.noOfPlayers + 1}
+			newPortion := racePortion{start: c_min, end: c_max - 1, availableTo: newAvailableTo, noOfPlayers: 1}
 
 			raceMap[loopIndex] = loopRacePortion
-			raceMap = append(raceMap, newPortion)
+			if index < 2 {
+				raceMap = append(raceMap, newPortion)
+			} else {
+				ix := findIndex(raceMap, c_min, c_max)
+				raceMap[ix].noOfPlayers += 1
+			}
 			raceMap = append(raceMap, toInsert)
 		} else if c_max == loopRacePortion.end && c_min < loopRacePortion.start {
 			fmt.Println("Equal Complete left")
-			newPortion := racePortion{start: c_min, end: loopRacePortion.end - 1}
+
+			availableTo := make([]bool, totalPlayers)
+			availableTo[index] = true
+
+			newPortion := racePortion{start: c_min, end: loopRacePortion.end - 1, availableTo: availableTo, noOfPlayers: 1}
 			loopRacePortion.noOfPlayers += 1
 
-			raceMap = append(raceMap, newPortion)
+			if index < 2 {
+				raceMap = append(raceMap, newPortion)
+			} else {
+				ix := findIndex(raceMap, c_min, c_max)
+				raceMap[ix].noOfPlayers += 1
+			}
 			raceMap[loopIndex] = loopRacePortion
 		} else if c_min == loopRacePortion.start && c_max == loopRacePortion.end {
 			fmt.Println("Equal equal")
+
 			loopRacePortion.noOfPlayers += 1
+			loopRacePortion.availableTo[index] = true
 			raceMap[loopIndex] = loopRacePortion
 		} else if c_min == loopRacePortion.start && c_max < loopRacePortion.end {
 			fmt.Println("Equal sub right")
+
+			availableTo := make([]bool, totalPlayers)
+			availableTo[index] = true
+
 			loopRacePortion.noOfPlayers += 1
-			newPortion := racePortion{start: c_max + 1, end: loopRacePortion.end}
+			loopRacePortion.availableTo[index] = true
+			newPortion := racePortion{start: c_max + 1, end: loopRacePortion.end, availableTo: availableTo, noOfPlayers: 1}
 			loopRacePortion.start = c_max
 
 			raceMap[loopIndex] = loopRacePortion
-			raceMap = append(raceMap, newPortion)
+			if index < 2 {
+				raceMap = append(raceMap, newPortion)
+			} else {
+				ix := findIndex(raceMap, c_min, c_max)
+				raceMap[ix].noOfPlayers += 1
+			}
 		} else if c_max == loopRacePortion.end && c_min > loopRacePortion.start {
 			fmt.Println("Equal sub left")
+
+			availableTo := make([]bool, totalPlayers)
+			availableTo[index] = true
+
 			loopRacePortion.noOfPlayers += 1
-			newPortion := racePortion{start: c_min + 1, end: loopRacePortion.end}
+			newPortion := racePortion{start: c_min + 1, end: loopRacePortion.end, availableTo: availableTo, noOfPlayers: 1}
 			loopRacePortion.end = c_min
+			loopRacePortion.availableTo[index] = true
+
 			raceMap[loopIndex] = loopRacePortion
-			raceMap = append(raceMap, newPortion)
+			if index < 2 {
+				raceMap = append(raceMap, newPortion)
+			} else {
+				ix := findIndex(raceMap, c_min, c_max)
+				raceMap[ix].noOfPlayers += 1
+			}
 		}
 	}
-	return raceMap
-}
-
-func insertToArray(index int, toInsert racePortion, raceMap []racePortion) []racePortion {
 	return raceMap
 }
 
@@ -214,6 +324,11 @@ func getData(filePath string) [][]int {
 	return runnerLimits
 }
 
+func getHighest(raceMap []racePortion) {
+	sort.Sort(ByNoOfPlayers(raceMap))
+	printMap(raceMap)
+}
+
 func atoiNoErr(num string) int {
 	number, err := strconv.Atoi(num)
 	if err != nil {
@@ -222,25 +337,17 @@ func atoiNoErr(num string) int {
 	return number
 }
 
-func cleanUp(raceMap []racePortion) []racePortion {
+func findIndex(raceMap []racePortion, start, end int) int {
 	for i, v := range raceMap {
-	inner:
-		for j, k := range raceMap {
-			if i == j {
-				continue
-			}
-			if v.start == k.start && v.end == k.end {
-				raceMap = removeFromArr(raceMap, j)
-				break inner
-			}
+		if v.start == start && v.end == end {
+			return i
 		}
 	}
-	return raceMap
+	return -1
 }
 
-func removeFromArr(raceMap []racePortion, ind int) []racePortion {
-	fmt.Println("Remove ", ind, raceMap[ind])
-	left := raceMap[:ind]
-	right := raceMap[ind+1:]
-	return append(left, right...)
+func printMap(raceMap []racePortion) {
+	for _, portion := range raceMap {
+		fmt.Println(portion.start, portion.end, portion.noOfPlayers)
+	}
 }
