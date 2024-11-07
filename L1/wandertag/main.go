@@ -46,9 +46,7 @@ func main() {
 
 	printMap(raceMap)
 
-	fmt.Println("--------------------------------------------")
 	getHighest(raceMap)
-	fmt.Println("--------------------------------------------")
 	fmt.Println(time.Since(startTime))
 }
 
@@ -325,8 +323,16 @@ func getData(filePath string) [][]int {
 }
 
 func getHighest(raceMap []racePortion) {
-	sort.Sort(ByNoOfPlayers(raceMap))
+	selected := []racePortion{}
+	for i := range 3 {
+
+		sort.Sort(ByNoOfPlayers(raceMap))
+		selected = append(selected, raceMap[0])
+		raceMap = remove(raceMap, 0)
+		raceMap = recalcNoOfPlayers(selected[i].availableTo, raceMap)
+	}
 	printMap(raceMap)
+	printMap(selected)
 }
 
 func atoiNoErr(num string) int {
@@ -346,8 +352,26 @@ func findIndex(raceMap []racePortion, start, end int) int {
 	return -1
 }
 
+func remove(slice []racePortion, s int) []racePortion {
+	return append(slice[:s], slice[s+1:]...)
+}
+
 func printMap(raceMap []racePortion) {
+	fmt.Println("--------------------------------------------")
 	for _, portion := range raceMap {
-		fmt.Println(portion.start, portion.end, portion.noOfPlayers)
+		fmt.Println(portion.start, portion.end, portion.noOfPlayers, portion.availableTo)
 	}
+	fmt.Println("--------------------------------------------")
+}
+
+func recalcNoOfPlayers(fromRemoved []bool, raceMap []racePortion) []racePortion {
+	for _, portion := range raceMap {
+		for i, value := range portion.availableTo {
+			if fromRemoved[i] == true && value {
+				portion.noOfPlayers -= 1
+				portion.availableTo[i] = false
+			}
+		}
+	}
+	return raceMap
 }
