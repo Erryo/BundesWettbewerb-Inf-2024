@@ -31,7 +31,9 @@ func main() {
 	var raceMap []racePortion
 	data := getData("../43.1/A3_Wandertag/wandern1.txt")
 
-	firstPortion := racePortion{data[0][0], data[0][1], make([]bool, len(data)), 1}
+	availableTo := make([]bool, len(data))
+	availableTo[0] = true
+	firstPortion := racePortion{data[0][0], data[0][1], availableTo, 1}
 	raceMap = append(raceMap, firstPortion)
 	fmt.Println(raceMap)
 	for ind, datum := range data {
@@ -47,6 +49,7 @@ func main() {
 	printMap(raceMap)
 
 	getHighest(raceMap)
+
 	fmt.Println(time.Since(startTime))
 }
 
@@ -325,13 +328,11 @@ func getData(filePath string) [][]int {
 func getHighest(raceMap []racePortion) {
 	selected := []racePortion{}
 	for i := range 3 {
-
 		sort.Sort(ByNoOfPlayers(raceMap))
 		selected = append(selected, raceMap[0])
 		raceMap = remove(raceMap, 0)
 		raceMap = recalcNoOfPlayers(selected[i].availableTo, raceMap)
 	}
-	printMap(raceMap)
 	printMap(selected)
 }
 
@@ -365,13 +366,31 @@ func printMap(raceMap []racePortion) {
 }
 
 func recalcNoOfPlayers(fromRemoved []bool, raceMap []racePortion) []racePortion {
-	for _, portion := range raceMap {
+	fmt.Println("[[[o[o[o[o[[o")
+	printMap(raceMap)
+	for j := 0; j < len(raceMap)-1; {
+		portion := raceMap[j]
+		fmt.Println(portion)
+	inner:
 		for i, value := range portion.availableTo {
-			if fromRemoved[i] == true && value {
-				portion.noOfPlayers -= 1
-				portion.availableTo[i] = false
+			fmt.Println("...", i, "...")
+			if fromRemoved[i] && value {
+				if portion.noOfPlayers-1 > 0 {
+					fmt.Println("<>")
+					portion.availableTo[i] = false
+					portion.noOfPlayers -= 1
+					raceMap[j] = portion
+				} else {
+					fmt.Println("><")
+					raceMap = remove(raceMap, j)
+					j--
+					break inner
+				}
 			}
 		}
+		j++
+		fmt.Println(portion)
 	}
+	printMap(raceMap)
 	return raceMap
 }
