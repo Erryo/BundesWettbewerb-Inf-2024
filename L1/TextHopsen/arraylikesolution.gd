@@ -104,7 +104,7 @@ func Start() {
 }
 
 // Reades the Current Rune under the cursor and increases the given pointer by 1
-// if it is rune 195 (F*** umlaut BTW) it decreases the pointer and reads again
+// if it is rune 195  it decreases the pointer and reads again
 // until the read rune is a letter then returns the index of the Letter
 func read(reader *bufio.Reader, pX *int, germanAlphabetMap map[string]int) int {
 	*pX += 1
@@ -115,7 +115,7 @@ func read(reader *bufio.Reader, pX *int, germanAlphabetMap map[string]int) int {
 	}
 	if readRune == 195 {
 		*pX -= 1
-		fmt.Println("FUCKKKKK YOU 195")
+		fmt.Println(" 195")
 		return read(reader, pX, germanAlphabetMap)
 	} else if !unicode.IsLetter(readRune) {
 		return read(reader, pX, germanAlphabetMap)

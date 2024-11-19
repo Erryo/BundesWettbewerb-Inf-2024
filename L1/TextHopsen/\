@@ -11,7 +11,7 @@ import (
 	"unicode"
 )
 
-var PATH_TO_FILE string = "../43.1/J2_Texthopsen/hopsen1.txt"
+var PATH_TO_FILE string = "../43.1/J2_Texthopsen/test.txt"
 
 const NUMBER_OF_PLAYERS = 2
 

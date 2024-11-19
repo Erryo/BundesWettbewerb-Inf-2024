@@ -29,7 +29,7 @@ func (a ByNoOfPlayers) Less(i, j int) bool { return a[i].noOfPlayers > a[j].noOf
 func main() {
 	startTime := time.Now()
 	var raceMap []racePortion
-	data := getData("../43.1/A3_Wandertag/wandern1.txt")
+	data := getData("../43.1/A3_Wandertag/wandern2.txt")
 
 	availableTo := make([]bool, len(data))
 	availableTo[0] = true
@@ -38,15 +38,14 @@ func main() {
 	raceMap = append(raceMap, firstPortion)
 	fmt.Println(raceMap)
 
-	totalPlayers := len(data)
 	for ind, datum := range data {
 		if ind == 0 {
 			continue
 		}
 		fmt.Println("------------------", ind, datum, "--------------------------")
 		// raceMap = test1(datum, ind, len(data), raceMap)
-		raceMap = addNew(raceMap, ind, totalPlayers, datum[0], datum[1])
-		// fmt.Println("--------------------------------------------")
+		raceMap = addNew(raceMap, ind, datum[0], datum[1])
+		fmt.Println("--------------------------------------------")
 	}
 	// Overlapping
 
@@ -65,6 +64,7 @@ func addNew(raceMap []racePortion, runnerIndex, totalPlayers, cMin, cMax int) []
 	availableTo := make([]bool, totalPlayers)
 	availableTo[runnerIndex] = true
 	for loopIndex, loopRacePortion := range raceMap {
+
 		if cMin < loopRacePortion.start && cMax < loopRacePortion.start {
 			fmt.Println("Not Overlapping left")
 			if added {
@@ -74,8 +74,6 @@ func addNew(raceMap []racePortion, runnerIndex, totalPlayers, cMin, cMax int) []
 			added = true
 			raceMap = append(raceMap, fPortion)
 
-		} else if cMin == loopRacePortion.start && cMax == loopRacePortion.end {
-			fmt.Println("Equal equal")
 		} else if cMin > loopRacePortion.end && cMax > loopRacePortion.end {
 			fmt.Println("Not Overlapping right")
 			if added {
@@ -103,31 +101,12 @@ func addNew(raceMap []racePortion, runnerIndex, totalPlayers, cMin, cMax int) []
 		} else if cMax < loopRacePortion.end && cMax > loopRacePortion.start && cMin < loopRacePortion.start {
 			fmt.Println("Co range left")
 
-			fAvailableTo := make([]bool, totalPlayers)
-			copy(fAvailableTo, loopRacePortion.availableTo)
-			fAvailableTo[runnerIndex] = true
-
-			fPortion := racePortion{start: loopRacePortion.start, end: cMax, availableTo: fAvailableTo}
+			fPortion := racePortion{start: cMin, end: loopRacePortion.start, availableTo: availableTo}
 			raceMap = addNew(raceMap, runnerIndex, totalPlayers, cMin, loopRacePortion.start-1)
 			loopRacePortion.end = cMax
-			raceMap = append(raceMap, fPortion)
 
 		} else if cMin > loopRacePortion.start && cMax < loopRacePortion.end {
 			fmt.Println("Sub-range inside")
-
-			fAvailableTo := make([]bool, totalPlayers)
-			copy(fAvailableTo, loopRacePortion.availableTo)
-			fAvailableTo[runnerIndex] = true
-
-			// Not using recursion because i am inserting, not creating a new portion
-			fPortion := racePortion{start: cMin, end: cMax, availableTo: fAvailableTo}
-			raceMap = append(raceMap, fPortion)
-			sPortion := racePortion{start: cMax + 1, end: loopRacePortion.end, availableTo: availableTo}
-			loopRacePortion.end = cMin - 1
-
-			raceMap = append(raceMap, sPortion)
-			raceMap[loopIndex] = loopRacePortion
-
 		} else if cMax > loopRacePortion.end && cMin < loopRacePortion.start {
 			fmt.Println("Sub-range outside")
 		} else if cMin == loopRacePortion.start && cMax > loopRacePortion.end {
@@ -138,6 +117,8 @@ func addNew(raceMap []racePortion, runnerIndex, totalPlayers, cMin, cMax int) []
 			fmt.Println("Equal touch left")
 		} else if cMax == loopRacePortion.end && cMin < loopRacePortion.start {
 			fmt.Println("Equal Complete left")
+		} else if cMin == loopRacePortion.start && cMax == loopRacePortion.end {
+			fmt.Println("Equal equal")
 		} else if cMin == loopRacePortion.start && cMax < loopRacePortion.end {
 			fmt.Println("Equal sub right")
 		} else if cMax == loopRacePortion.end && cMin > loopRacePortion.start {
@@ -182,7 +163,7 @@ func getHighest(raceMap []racePortion) {
 		raceMap = remove(raceMap, 0)
 		raceMap = recalcNoOfPlayers(selected[i].availableTo, raceMap)
 	}
-	// printMap(selected)
+	printMap(selected)
 	declareRaces(selected)
 }
 
@@ -229,7 +210,7 @@ func printMap(raceMap []racePortion) {
 
 func recalcNoOfPlayers(fromRemoved []bool, raceMap []racePortion) []racePortion {
 	fmt.Println("[[[o[o[o[o[[o")
-	// printMap(raceMap)
+	printMap(raceMap)
 	for j := 0; j < len(raceMap)-1; {
 		portion := raceMap[j]
 		fmt.Println(portion)
@@ -253,7 +234,7 @@ func recalcNoOfPlayers(fromRemoved []bool, raceMap []racePortion) []racePortion 
 		j++
 		fmt.Println(portion)
 	}
-	// printMap(raceMap)
+	printMap(raceMap)
 	return raceMap
 }
 

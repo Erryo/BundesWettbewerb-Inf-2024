@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-const PATH_TO_INPUT string = "../43.1/J1_QuadratischPraktischGrБn/garten5.txt"
+const PATH_TO_INPUT string = "../43.1/J1_QuadratischPraktischGrБn/garten1.txt"
 
 func main() {
 	readValues := readFile()
@@ -23,7 +23,8 @@ func main() {
 
 	text := fmt.Sprintf("For a lot of the size %vx%v and %v parties Mr.Green should give each person %.4f sqr meters \n", heigth, width, noParties, areaPerPartie)
 	text_2 := fmt.Sprintf("which means he should divide the heigth by %.4f and the width by %.4f\n", divA, divB)
-	fmt.Println(text, text_2)
+	text_3 := fmt.Sprintf("So the side of each partie's square is: %.4f  \n", lengthSquare)
+	fmt.Println(text, text_2, text_3)
 }
 
 func readFile() []string {
